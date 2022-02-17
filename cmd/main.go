@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
+	"text/template"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -24,6 +28,10 @@ func parseMessagePayload(raw []byte) (*MessagePayload, error) {
 	return &pl, nil
 }
 
+type CommandArgs struct {
+	Message string
+}
+
 func handleMessage(c mqtt.Client, m mqtt.Message) {
 	payload, err := parseMessagePayload(m.Payload())
 	if err != nil {
@@ -31,10 +39,28 @@ func handleMessage(c mqtt.Client, m mqtt.Message) {
 		return
 	}
 	fmt.Printf("Received message %s from %d\n", payload.Text, payload.ChatID)
-	command := os.Getenv("COMMAND")
-	fmt.Printf("Going to execute command %s\n", command)
-	cmd := exec.Command(command, payload.Text)
+
+	commandTemplate, err := template.New("command").Parse(os.Getenv("COMMAND"))
+	if err != nil {
+		fmt.Printf("Error parsing command template: %s\n", err)
+		return
+	}
+
+	buf := bytes.NewBuffer([]byte{})
+	if err := commandTemplate.Execute(buf, CommandArgs{Message: strconv.Quote(payload.Text)}); err != nil {
+		fmt.Printf("Error executing command template: %s\n", err)
+		return
+	}
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("c:\\windows\\system32\\cmd.exe", "/c", buf.String())
+	} else {
+		cmd = exec.Command("/bin/sh", "-c", buf.String())
+	}
+
 	stdout, err := cmd.Output()
+	fmt.Printf("Running command %s\n", cmd.String())
 	if err != nil {
 		fmt.Printf("Error executing command %s\n", err)
 		return
