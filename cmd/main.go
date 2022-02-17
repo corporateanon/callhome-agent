@@ -1,16 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
-	"strconv"
-	"text/template"
 	"time"
 
+	"github.com/corporateanon/callhome/internal/messagebox"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -39,33 +35,10 @@ func handleMessage(c mqtt.Client, m mqtt.Message) {
 		return
 	}
 	fmt.Printf("Received message %s from %d\n", payload.Text, payload.ChatID)
-
-	commandTemplate, err := template.New("command").Parse(os.Getenv("COMMAND"))
-	if err != nil {
-		fmt.Printf("Error parsing command template: %s\n", err)
+	if err := messagebox.NewMessageBox().ShowMessage(payload.Text); err != nil {
+		fmt.Printf("ShowMessage error %s\n", err)
 		return
 	}
-
-	buf := bytes.NewBuffer([]byte{})
-	if err := commandTemplate.Execute(buf, CommandArgs{Message: strconv.Quote(payload.Text)}); err != nil {
-		fmt.Printf("Error executing command template: %s\n", err)
-		return
-	}
-
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("c:\\windows\\system32\\cmd.exe", "/c", buf.String())
-	} else {
-		cmd = exec.Command("/bin/sh", "-c", buf.String())
-	}
-
-	stdout, err := cmd.Output()
-	fmt.Printf("Running command %s\n", cmd.String())
-	if err != nil {
-		fmt.Printf("Error executing command %s\n", err)
-		return
-	}
-	fmt.Printf("Command output: %s\n", stdout)
 }
 
 func main() {
