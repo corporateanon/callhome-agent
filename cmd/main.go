@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -23,7 +24,10 @@ func main() {
 		SetOnTextMessage(handleTextMessage)
 
 	if err := consumer.NewConsumer(opts).Connect(); err != nil {
-		panic(err)
+		log.Fatalf("Failed to start due to error: %s\n", err)
 	}
-	time.Sleep(time.Second * 1e9)
+
+	for {
+		time.Sleep(time.Second * 1e9)
+	}
 }

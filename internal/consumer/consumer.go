@@ -1,7 +1,9 @@
 package consumer
 
 import (
-	"fmt"
+	"crypto/tls"
+	"log"
+	"net/url"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -18,21 +20,33 @@ type Consumer struct {
 func (c *Consumer) handleMessage(client mqtt.Client, m mqtt.Message) {
 	payload, err := parseMessagePayload(m.Payload())
 	if err != nil {
-		fmt.Printf("Error parsing message payload: %s\n", err)
+		log.Printf("Error parsing message payload: %s\n", err)
 		return
 	}
-	fmt.Printf("Received message %s from %d\n", payload.Text, payload.ChatID)
+	log.Printf("Received message %s from %d\n", payload.Text, payload.ChatID)
 	if err := c.options.onTextMessage(payload.Text); err != nil {
-		fmt.Printf("An error occurred while handling message: %s\n", err)
+		log.Printf("An error occurred while handling message: %s\n", err)
 	}
 }
 
 func (c *Consumer) Connect() error {
 	opts := mqtt.NewClientOptions().
 		AddBroker(c.options.brokerHost).
-		SetAutoReconnect(true).
+		SetKeepAlive(10 * time.Second).
 		SetConnectRetry(true).
-		SetConnectRetryInterval((time.Second * 5))
+		SetAutoReconnect(true).
+		SetConnectRetryInterval(time.Second * 5).
+		SetMaxReconnectInterval(time.Minute * 1).
+		SetConnectionLostHandler(func(c mqtt.Client, err error) {
+			log.Printf("Connection lost due to error %s\n", err)
+		}).
+		SetConnectionAttemptHandler(func(broker *url.URL, tlsCfg *tls.Config) *tls.Config {
+			log.Println("Connecting...")
+			return tlsCfg
+		}).
+		SetOnConnectHandler(func(c mqtt.Client) {
+			log.Println("Connected")
+		})
 
 	client := mqtt.NewClient(opts)
 
