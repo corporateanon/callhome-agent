@@ -44,17 +44,16 @@ func (c *Consumer) Connect() error {
 			log.Println("Connecting...")
 			return tlsCfg
 		}).
-		SetOnConnectHandler(func(c mqtt.Client) {
+		SetOnConnectHandler(func(client mqtt.Client) {
 			log.Println("Connected")
+			if token := client.Subscribe(c.options.messageTopic, 0, c.handleMessage); token.Wait() && token.Error() != nil {
+				log.Printf("Could not subscribe to the topic due to error %s\n", token.Error())
+			}
 		})
 
 	client := mqtt.NewClient(opts)
 
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		return token.Error()
-	}
-
-	if token := client.Subscribe(c.options.messageTopic, 0, c.handleMessage); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 
