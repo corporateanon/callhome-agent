@@ -36,7 +36,7 @@ type withBrokerHostImpl struct {
 }
 
 func (o withBrokerHostImpl) apply(c *Consumer) error {
-	c.brokerHost = o.o
+	c.BrokerHost = o.o
 	return nil
 }
 
@@ -56,6 +56,7 @@ func (o withBrokerHostImpl) String() string {
 	return fmt.Sprintf("%s: %+v", name, value)
 }
 
+// WithBrokerHost MQTT broker host (e.g. "broker.hivemq.com:1883")
 func WithBrokerHost(o string) Option {
 	return withBrokerHostImpl{
 		o: o,
@@ -67,7 +68,7 @@ type withMessageTopicImpl struct {
 }
 
 func (o withMessageTopicImpl) apply(c *Consumer) error {
-	c.messageTopic = o.o
+	c.MessageTopic = o.o
 	return nil
 }
 
@@ -87,6 +88,7 @@ func (o withMessageTopicImpl) String() string {
 	return fmt.Sprintf("%s: %+v", name, value)
 }
 
+// WithMessageTopic MQTT topic
 func WithMessageTopic(o string) Option {
 	return withMessageTopicImpl{
 		o: o,
@@ -98,7 +100,7 @@ type withOnTextMessageImpl struct {
 }
 
 func (o withOnTextMessageImpl) apply(c *Consumer) error {
-	c.onTextMessage = o.o
+	c.OnTextMessage = o.o
 	return nil
 }
 
@@ -118,6 +120,7 @@ func (o withOnTextMessageImpl) String() string {
 	return fmt.Sprintf("%s: %+v", name, value)
 }
 
+// WithOnTextMessage a function to handle incoming message
 func WithOnTextMessage(o func(msg string) error) Option {
 	return withOnTextMessageImpl{
 		o: o,

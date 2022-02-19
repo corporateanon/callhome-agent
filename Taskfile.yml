@@ -13,6 +13,9 @@ tasks:
     generates:
       - internal/consumer/Consumer_options.go
 
+  snapshot:
+    cmds:
+      - goreleaser release --rm-dist --snapshot
 
   build:all:
     cmds:
