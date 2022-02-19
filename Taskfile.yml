@@ -1,0 +1,33 @@
+version: "3"
+
+tasks:
+  generate:
+    deps:
+      - generate:consumer
+    
+  generate:consumer:
+    cmds:
+      - go generate internal/consumer/consumer.go
+    sources:
+      - internal/consumer/consumer.go
+    generates:
+      - internal/consumer/Consumer_options.go
+
+
+  build:all:
+    cmds:
+      - goreleaser build --rm-dist --skip-validate
+
+  build:win64:
+    env:
+      GOOS: windows
+      GOARCH: amd64
+    cmds:
+      - goreleaser build --rm-dist --skip-validate --single-target
+
+  build:linux64:
+    env:
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - goreleaser build --rm-dist --skip-validate --single-target
