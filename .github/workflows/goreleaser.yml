@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install UPX
-        run: apt update && apt install -y upx
+        run: sudo apt-get update && sudo apt-get install -y upx
 
       - name: Set up Go
         uses: actions/setup-go@v2
