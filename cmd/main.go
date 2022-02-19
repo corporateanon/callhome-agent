@@ -18,12 +18,17 @@ func handleTextMessage(message string) error {
 }
 
 func main() {
-	opts := consumer.NewOptions().
-		SetBrokerHost(os.Getenv("MQTT_HOST")).
-		SetMessageTopic(os.Getenv("MQTT_TOPIC")).
-		SetOnTextMessage(handleTextMessage)
+	consumer, err := consumer.NewConsumer(
+		consumer.WithBrokerHost(os.Getenv("MQTT_HOST")),
+		consumer.WithMessageTopic(os.Getenv("MQTT_TOPIC")),
+		consumer.WithOnTextMessage(handleTextMessage),
+	)
 
-	if err := consumer.NewConsumer(opts).Connect(); err != nil {
+	if err != nil {
+		log.Fatalf("Initialization error: %s\n", err)
+	}
+
+	if err := consumer.Connect(); err != nil {
 		log.Fatalf("Failed to start due to error: %s\n", err)
 	}
 

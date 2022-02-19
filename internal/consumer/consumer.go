@@ -1,3 +1,5 @@
+//go:generate go-options -prefix With Consumer
+
 package consumer
 
 import (
@@ -14,7 +16,9 @@ type IConsumer interface {
 }
 
 type Consumer struct {
-	options *Options
+	brokerHost    string
+	messageTopic  string
+	onTextMessage func(msg string) error
 }
 
 func (c *Consumer) handleMessage(client mqtt.Client, m mqtt.Message) {
@@ -24,14 +28,14 @@ func (c *Consumer) handleMessage(client mqtt.Client, m mqtt.Message) {
 		return
 	}
 	log.Printf("Received message %s from %d\n", payload.Text, payload.ChatID)
-	if err := c.options.onTextMessage(payload.Text); err != nil {
+	if err := c.onTextMessage(payload.Text); err != nil {
 		log.Printf("An error occurred while handling message: %s\n", err)
 	}
 }
 
 func (c *Consumer) Connect() error {
 	opts := mqtt.NewClientOptions().
-		AddBroker(c.options.brokerHost).
+		AddBroker(c.brokerHost).
 		SetKeepAlive(10 * time.Second).
 		SetConnectRetry(true).
 		SetAutoReconnect(true).
@@ -46,7 +50,7 @@ func (c *Consumer) Connect() error {
 		}).
 		SetOnConnectHandler(func(client mqtt.Client) {
 			log.Println("Connected")
-			if token := client.Subscribe(c.options.messageTopic, 0, c.handleMessage); token.Wait() && token.Error() != nil {
+			if token := client.Subscribe(c.messageTopic, 0, c.handleMessage); token.Wait() && token.Error() != nil {
 				log.Printf("Could not subscribe to the topic due to error %s\n", token.Error())
 			}
 		})
@@ -60,6 +64,7 @@ func (c *Consumer) Connect() error {
 	return nil
 }
 
-func NewConsumer(options *Options) IConsumer {
-	return &Consumer{options: options}
+func NewConsumer(options ...Option) (IConsumer, error) {
+	c, err := newConsumer(options...)
+	return &c, err
 }
