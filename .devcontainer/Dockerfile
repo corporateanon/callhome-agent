@@ -13,16 +13,14 @@ RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
 
 
-RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/sources.list.d/goreleaser.list \
-    && apt-get update \
-    && apt-get -y install --no-install-recommends goreleaser
-
 
 
 
 # [Optional] Uncomment the next lines to use go get to install anything else you need
-# USER vscode
-# RUN go get -x <your-dependency-or-tool>
+USER vscode
+RUN go install github.com/goreleaser/goreleaser@latest
+RUN go install github.com/go-task/task/v3/cmd/task@latest
+RUN go install github.com/launchdarkly/go-options@latest
 
 # [Optional] Uncomment this line to install global node packages.
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1
